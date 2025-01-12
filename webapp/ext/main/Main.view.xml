@@ -1,11 +1,11 @@
 <mvc:View xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:macros="sap.fe.macros"
-    xmlns:f="sap.f" xmlns:macrosTable="sap.fe.macros.table"
+    xmlns:f="sap.f" xmlns:macrosTable="sap.fe.macros.table" xmlns:v="sap.ui.fl.variants"
     xmlns:html="http://www.w3.org/1999/xhtml" controllerName="miyasuta.selectallaction.ext.main.Main">
     <f:DynamicPage id="FilterBarDefault" class="sapUiResponsiveContentPadding">
 		<f:title>
 			<f:DynamicPageTitle id="_IDGenDynamicPageTitle1">
 				<f:heading>
-					<Title id="_IDGenTitle1" text="Filter Bar" level="H2" />
+					<v:VariantManagement id="vm" for="FilterBar" showSetAsDefault="true" headerLevel="H2" />
 				</f:heading>
 				<f:snappedContent>
 					<Text id="_IDGenText" text="{fbConditions>/filtersTextInfo}" />
