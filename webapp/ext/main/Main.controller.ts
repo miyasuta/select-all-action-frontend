@@ -69,68 +69,74 @@ export default class Main extends Controller {
 
     public onGetTotalStockValue(): void {
         //get filter conditions
-        const filterBar = this.getView()?.byId("FilterBar") as FilterBar;
-        const filters = (filterBar.getFilters() as FilterObject).filters[0];
-        let allFilters: Filter[] = [];
-
-        //when multiple filters are set
-        if (Array.isArray(filters?.getFilters())) {
-            allFilters = filters.getFilters() as Filter[];
-        }
-        //when single filter is set
-        else if (filters) {
-            allFilters.push(filters)
-        }
-
-        let plant: string | undefined;
-        let locations: Array<Location> = [];
-        
-        allFilters?.forEach(filter => {
-            const processFilter = (f: Filter) => {
-                if (f.getPath() === "Plant") {
-                    plant = f.getValue1();
-                } else if (f.getPath() === "Location") {
-                    locations.push({ location: f.getValue1()} )
-                }
-            }
-
-            if (filter.getPath()) {
-                processFilter(filter);
-            } else {
-                filter.getFilters()?.forEach(innerFilter => processFilter(innerFilter));
-            }              
-        })
+        const { plant, locations } = this.extractFilterConditions();
 
         // validate required parameters
         if (!plant) {
             MessageBox.error("Select a plant in the filter");
             return;
-        }        
+        }
 
-        //invoce action
+        // invoke action
         const model = this.getModel();
         const operation = model?.bindContext("/Stock/" + namespace + "calcStockAmountAll(...)") as ODataContextBinding;
         operation.setParameter("plant", plant);
         operation.setParameter("_location", locations);
 
         const fnSuccess = () => {
-            //show total
+            // show total
             const result = operation.getBoundContext().getObject() as Result;
             const amount = result.amount;
             const numberFormat = NumberFormat.getIntegerInstance({
                 groupingEnabled: true
             });
-            var formattedAmount = numberFormat.format(amount);
+            const formattedAmount = numberFormat.format(amount);
             MessageBox.show(`${formattedAmount} JPY`, {
                 title: "Stock Amount"
             });
-        }
-    
-        const fnError = (error:Error) => {
+        };
+
+        const fnError = (error: Error) => {
             MessageBox.error(error.message);
-        }
-    
+        };
+
         operation.invoke().then(fnSuccess, fnError);
-        
+    }
+
+    private extractFilterConditions(): { plant: string | undefined; locations: Location[] } {
+        //get filter conditions
+        const allFilters = this.getAllFilters();
+
+        let plantRef = { plant: undefined as string | undefined };
+        let locations: Array<Location> = [];
+
+        allFilters.forEach(filter => {
+            if (filter.getPath()) {
+                this.processFilter(filter, plantRef, locations);
+            } else {
+                filter.getFilters()?.forEach(innerFilter => this.processFilter(innerFilter, plantRef, locations));
+            }
+        });
+
+        return { plant: plantRef.plant, locations };
+    }
+
+    private getAllFilters(): Filter[] {
+        const filterBar = this.getView()?.byId("FilterBar") as FilterBar;
+        const filters = (filterBar.getFilters() as FilterObject).filters[0];
+        if (Array.isArray(filters?.getFilters())) {
+            return filters.getFilters() as Filter[];
+        } else if (filters) {
+            return [filters];
+        }
+        return [];
+    }
+    
+    private processFilter(filter: Filter, plantRef: { plant: string | undefined }, locations: Location[]): void {
+        if (filter.getPath() === "Plant") {
+            plantRef.plant = filter.getValue1();
+        } else if (filter.getPath() === "Location") {
+            locations.push({ location: filter.getValue1() });
+        }
     }
 }
