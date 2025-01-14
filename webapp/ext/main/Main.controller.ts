@@ -123,12 +123,21 @@ export default class Main extends Controller {
 
     private getAllFilters(): Filter[] {
         const filterBar = this.getView()?.byId("FilterBar") as FilterBar;
+
+        // Get the filters from the FilterBar; the structure of filters[0]
+        // can either be an object (if a single filter value is set)
+        // or an array (if multiple filter values are set).
         const filters = (filterBar.getFilters() as FilterObject).filters[0];
+
+        // If filters[0] contains an array of filters, return it directly
         if (Array.isArray(filters?.getFilters())) {
             return filters.getFilters() as Filter[];
+
+        // If filters[0] is an object, wrap it in an array and return
         } else if (filters) {
             return [filters];
         }
+        // If no filters are set, return an empty array
         return [];
     }
     
